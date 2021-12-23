@@ -94,5 +94,54 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    setClock('.timer', deadLine)
+    setClock('.timer', deadLine);
+
+    // Modal window
+
+    const modalTrigger = document.querySelectorAll('[data-modal]');
+    const modal = document.querySelector('.modal');
+    const modalCloseBtn = document.querySelector('[data-close]'); 
+
+    function openModal() {
+        modal.classList.add('show');
+            modal.classList.remove('hide');
+            // убираем прокрутку страницы при открытой модалки
+        document.body.style.overflow = 'hidden';
+        clearInterval(modelTimerId);
+    }
+
+    modalTrigger.forEach(btn => {
+            btn.addEventListener('click', openModal);
+    });
+
+    function closeModal() {
+        modal.classList.add('hide');
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    modalCloseBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Escape' && modal.classList.contains('show')) {
+            closeModal();
+        }
+    });
+
+    const modelTimerId = setTimeout(openModal, 3000);
+
+    function showModalByScroll() {
+        if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
+            openModal();
+            window.removeEventListener('scroll', showModalByScroll);
+        }
+    }
+    // после прокрутки до конца страницы - выводить модалку
+    window.addEventListener('scroll', showModalByScroll);
 });
