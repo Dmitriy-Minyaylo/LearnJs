@@ -214,4 +214,5 @@ window.addEventListener('DOMContentLoaded', () => {
         'menu__item'
         ).render();
 
+    
 });
