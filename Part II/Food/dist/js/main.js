@@ -239,10 +239,7 @@ window.addEventListener('DOMContentLoaded', () => {
             // отрисовка спинера после блоков модального окна
             form.insertAdjacentElement('afterend', statusMessage)
 
-            const request = new XMLHttpRequest();
-            request.open('POST', 'server.php');
-            
-            request.setRequestHeader('Content-type', 'application/json');
+            // сбор данных для отправки из формы
             const formData = new FormData(form); 
 
             // создаем объект, который поможет декодировать данные
@@ -251,25 +248,27 @@ window.addEventListener('DOMContentLoaded', () => {
                 objectToJson[key] = value;
             });
 
-            const json = JSON.stringify(objectToJson);
-
-            request.send(json);
-            // отслежитвание загрузки запроса
-            request.addEventListener('load', () => {
-                // проверка статуса на OK
-                if (request.status === 200) {
-                    console.log(request.response);
-                    // если после запроса все успешно
-                    showThanksModal(message.success);
-                    // очистка формы после отправки на сервер
-                    form.reset();
-                    // очистка блока с сообщением
-                    statusMessage.remove();
-
-                } else {
-                showThanksModal(message.failure);
-                }
+            // отправка данных на сервер
+            fetch('server.php', {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(objectToJson)
             })
+            .then(data => data.text())
+            .then(data => {
+                console.log(data);
+                // если после запроса все успешно
+                showThanksModal(message.success);
+                // очистка блока с сообщением
+                statusMessage.remove();
+            }).catch(() => {
+                showThanksModal(message.failure);
+            }).finally(() => {
+                // очистка формы после отправки на сервер
+                form.reset();
+            });
         })
     }
 
