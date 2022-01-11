@@ -183,34 +183,29 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
-	new MenuCard(
-		'img/tabs/vegy.jpg',
-		'vegy',
-		'Меню "Фитнес"',
-		'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-		8,
-		'.menu .container'
-	).render()
+	// откуда/что берем для отрисовки
+	const getResource = async url => {
+		// т.к. для fetch большинство ошибок это результат, то .catch не сработает, поэтому
+		const res = await fetch(url)
+		if (!res.ok) {
+			throw new Error(`Could not fetch ${url}, status: ${res.status}`)
+		}
+		return await res.json()
+	}
 
-	new MenuCard(
-		'img/tabs/elite.jpg',
-		'elite',
-		'Меню “Премиум”',
-		'В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан! Бери быстрее - мы заждались)',
-		15,
-		'.menu .container',
-		'menu__item'
-	).render()
-
-	new MenuCard(
-		'img/tabs/post.jpg',
-		'post',
-		'Меню "Постное"',
-		'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-		11,
-		'.menu .container',
-		'menu__item'
-	).render()
+	getResource('http://localhost:3000/menu').then(data => {
+		// деструкторизация помогает сделать DRY с карточками и "пишем куда мы его рендерим"
+		data.forEach(({ img, altimg, title, descr, price }) => {
+			new MenuCard(
+				img,
+				altimg,
+				title,
+				descr,
+				price,
+				'.menu .container'
+			).render()
+		})
+	})
 
 	// Forms
 
@@ -223,10 +218,23 @@ window.addEventListener('DOMContentLoaded', () => {
 	}
 
 	forms.forEach(item => {
-		postData(item)
+		bindPostData(item)
 	})
+	// куда/что отсылаем в синхронном режиме
+	const postData = async (url, data) => {
+		const res = await fetch(url, {
+			method: 'POST',
+			headers: {
+				'Content-type': 'application/json',
+			},
+			body: data,
+		})
 
-	function postData(form) {
+		return await res.json()
+	}
+
+	// функция для привязки данных к серверу
+	function bindPostData(form) {
 		form.addEventListener('submit', e => {
 			e.preventDefault()
 
@@ -244,20 +252,10 @@ window.addEventListener('DOMContentLoaded', () => {
 			const formData = new FormData(form)
 
 			// создаем объект, который поможет декодировать данные
-			const objectToJson = {}
-			formData.forEach(function (value, key) {
-				objectToJson[key] = value
-			})
+			const json = JSON.stringify(Object.fromEntries(formData.entries()))
 
 			// отправка данных на сервер
-			fetch('server.php', {
-				method: 'POST',
-				headers: {
-					'Content-type': 'application/json',
-				},
-				body: JSON.stringify(objectToJson),
-			})
-				.then(data => data.text())
+			postData('http://localhost:3000/requests', json)
 				.then(data => {
 					console.log(data)
 					// если после запроса все успешно
@@ -287,7 +285,6 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="modal__content">
             <div class="modal__close">&times;</div>
             <div class="modal__title">${message}</div>
-
         </div>
         `
 		document.querySelector('.modal').append(thanksModal)
@@ -298,4 +295,8 @@ window.addEventListener('DOMContentLoaded', () => {
 			closeModal()
 		}, 4000)
 	}
+
+	fetch('db.json')
+		.then(data => data.json())
+		.then(res => console.log(res))
 })
